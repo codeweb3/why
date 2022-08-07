@@ -1,0 +1,75 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <vector>
+#include <math.h>
+#include <algorithm>
+using namespace std;
+
+int nodes[200010], depth[200010], last[100010], check[100010], ST[200010][20];
+vector<int> adj[100010];
+
+int ET(int x, int dpth, int i)
+{
+	nodes[i] = x;
+	last[x] = i;
+	depth[i++] = dpth;
+	for (int j = 0; j < adj[x].size(); j++)
+	{
+		if (check[adj[x][j]] == 1) continue;
+		check[adj[x][j]] = 1;
+		i = ET(adj[x][j], dpth + 1, i);
+		nodes[i] = x;
+		last[x] = i;
+		depth[i++] = dpth;
+	}
+	return i;
+}
+
+void LCA(int n)
+{
+	check[1] = 1;
+	ET(1, 1, 0);
+	int i, j;
+	for (i = 0; i < 2 * n - 1; i++) ST[i][0] = i;
+	int h = log2((double)n);
+	for (i = 1; i <= h; i++)
+	{
+		int p = pow(2, i);
+		for (j = 0; j < 2 * n - 1; j++)
+		{
+			if (j + p - 1 >= 2 * n - 1) continue;
+			int v1 = depth[ST[j][i - 1]], v2 = depth[ST[j + p / 2][i - 1]];
+			if (v1 < v2) ST[j][i] = ST[j][i - 1];
+			else ST[j][i] = ST[j + p / 2][i - 1];
+		}
+	}
+}
+
+int main()
+{
+	int n, m, i, j, a, b;
+	scanf("%d", &n);
+	for (i = 0; i < n-1; i++)
+	{
+		scanf("%d %d", &a, &b);
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+	LCA(n);
+	scanf("%d", &m);
+	for (i = 0; i < m; i++)
+	{
+		scanf("%d %d", &a, &b);
+		a = last[a];
+		b = last[b];
+		if (a > b)
+		{
+			int tmp = a;
+			a = b;
+			b = tmp;
+		}
+		int h = log2(b - a + 1), v1 = depth[ST[a][h]], v2 = depth[ST[(int)(b - pow(2, h) + 1)][h]];
+		if (v1 < v2) printf("%d\n", nodes[ST[a][h]]);
+		else printf("%d\n", nodes[ST[(int)(b - pow(2, h) + 1)][h]]);
+	}
+}
